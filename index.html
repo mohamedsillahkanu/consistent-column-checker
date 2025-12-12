@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICF-SL Column Consistency Checker Across Years</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            font-family: 'Oswald', Arial, sans-serif;
+            color: #000000;
+            font-weight: 500;
+            padding: 20px;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            background-color: #004080;
+            color: #ffffff;
+            padding: 25px 30px;
+            text-align: center;
+            margin-bottom: 15px;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .logo-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 15px;
+        }
+
+        .logo-box {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-box img {
+            width: 100px;
+            height: auto;
+            border-radius: 6px;
+        }
+
+        .page-header h3 {
+            margin: 12px 0 5px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #ffffff;
+        }
+
+        .page-header .tagline {
+            margin: 0;
+            font-size: 10px;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .page-header h1 {
+            margin: 20px 0 10px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+
+        .page-header .subtitle {
+            font-size: 14px;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .content-card {
+            border: 4px double #004080;
+            border-radius: 12px;
+            padding: 12px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+
+        .content-inner {
+            padding: 25px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            border: 2px dashed #004080;
+            text-align: center;
+            margin: 1.5rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #0056b3;
+            background: #e7f3ff;
+        }
+
+        .upload-section h3 {
+            color: #004080;
+            margin-bottom: 1rem;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .upload-section p {
+            color: #000000;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            background: #004080;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 6px;
+            border: 2px solid #004080;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'Oswald', Arial, sans-serif;
+            margin-top: 1rem;
+        }
+
+        .file-input-wrapper:hover {
+            background: #0056b3;
+            border-color: #0056b3;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .section-header {
+            background-color: #004080;
+            color: #ffffff;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-icon {
+            background: #ffffff;
+            color: #004080;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+
+        .stats-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 2px solid #004080;
+            transition: all 0.2s;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 64, 128, 0.2);
+        }
+
+        .stats-card h4 {
+            color: #666;
+            font-size: 11px;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .stats-card .metric-value {
+            font-size: 1.6rem;
+            color: #004080;
+            margin-bottom: 0.25rem;
+            font-weight: 700;
+        }
+
+        .stats-card p {
+            color: #666;
+            font-size: 11px;
+        }
+
+        .stats-card.warning .metric-value {
+            color: #dc3545;
+        }
+
+        .stats-card.success .metric-value {
+            color: #28a745;
+        }
+
+        .stats-card.info .metric-value {
+            color: #17a2b8;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: 2px solid #004080;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'Oswald', Arial, sans-serif;
+            transition: all 0.2s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: #004080;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+            border-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: #004080;
+        }
+
+        .btn-secondary:hover {
+            background: #004080;
+            color: #ffffff;
+        }
+
+        .btn-gold {
+            background: #ffc107;
+            color: #000000;
+            border-color: #ffc107;
+        }
+
+        .btn-gold:hover {
+            background: #e0a800;
+            border-color: #e0a800;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: #ffffff;
+            border-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            border-color: #218838;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background: #e7f3ff;
+            border: 2px solid #004080;
+            color: #004080;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            color: #004080;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #004080;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #ffffff;
+            color: #000000;
+            font-family: 'Oswald', Arial, sans-serif;
+            font-weight: 500;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #0056b3;
+            box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.1);
+        }
+
+        .config-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 2px solid #004080;
+            margin: 1rem 0;
+        }
+
+        .config-card h4 {
+            color: #004080;
+            margin-bottom: 1rem;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .loading-spinner {
+            border: 4px solid #e7f3ff;
+            border-top: 4px solid #004080;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .page-footer {
+            background-color: #004080;
+            color: #ffffff;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.7;
+            font-weight: 500;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .page-footer p {
+            margin: 6px 0 0;
+            font-size: 12px;
+            color: #ffffff;
+        }
+
+        .table-container {
+            overflow: auto;
+            border: 2px solid #004080;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .results-table th {
+            background: #004080;
+            color: #ffffff;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+
+        .results-table td {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid #ddd;
+            white-space: nowrap;
+        }
+
+        .results-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .results-table tr:hover {
+            background: #e7f3ff;
+        }
+
+        .results-table tr.issue-row {
+            background: #fff3cd !important;
+        }
+
+        .results-table tr.critical-row {
+            background: #f8d7da !important;
+        }
+
+        .year-cell {
+            text-align: center;
+            font-weight: 700;
+            min-width: 80px;
+        }
+
+        .year-cell.has-data {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .year-cell.no-data {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .year-cell.partial-data {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-consistent {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-missing {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-new {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .badge-discontinued {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .badge-partial {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .issue-card {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .issue-card.critical {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .issue-card.warning {
+            border-color: #ffc107;
+            background: #fffef5;
+        }
+
+        .issue-card.info {
+            border-color: #17a2b8;
+            background: #f5fdff;
+        }
+
+        .issue-card h5 {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .issue-card p {
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 0.5rem;
+        }
+
+        .year-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 0.5rem;
+        }
+
+        .year-tag {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .year-tag.present {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .year-tag.missing {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .timeline-container {
+            overflow-x: auto;
+            padding: 1rem 0;
+        }
+
+        .timeline {
+            display: flex;
+            align-items: center;
+            min-width: max-content;
+            padding: 0 1rem;
+        }
+
+        .timeline-year {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 80px;
+        }
+
+        .timeline-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #004080;
+            margin-bottom: 5px;
+        }
+
+        .timeline-dot.baseline {
+            background: #28a745;
+            width: 26px;
+            height: 26px;
+            border: 3px solid #155724;
+        }
+
+        .timeline-line {
+            height: 3px;
+            width: 40px;
+            background: #004080;
+        }
+
+        .timeline-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #004080;
+        }
+
+        .baseline-indicator {
+            background: #d4edda;
+            color: #155724;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-top: 3px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #004080;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 700;
+            color: #004080;
+            border: 2px solid transparent;
+            border-bottom: none;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            background: #e7f3ff;
+        }
+
+        .tab.active {
+            background: #004080;
+            color: #fff;
+            border-color: #004080;
+            border-radius: 6px 6px 0 0;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .legend-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #004080;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .content-inner {
+                padding: 15px;
+            }
+            .page-header h1 {
+                font-size: 20px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <div class="logo-row">
+                <div class="logo-box">
+                    <img src="https://github.com/mohamedsillahkanu/gdp-dashboard-2/raw/6c7463b0d5c3be150aafae695a4bcbbd8aeb1499/ICF-SL.jpg" alt="ICF-SL Logo">
+                </div>
+            </div>
+            <h3>Informatics Consultancy Firm-Sierra Leone<br>(ICF-SL)</h3>
+            <p class="tagline"><em>Driving Data-Driven Solutions for Health and Development</em></p>
+            <h1>COLUMN CONSISTENCY CHECKER</h1>
+            <p class="subtitle">Check Column Data Availability Across Years | Detect Missing & New Columns</p>
+        </div>
+
+        <div class="content-card">
+            <div class="content-inner">
+
+                <!-- Alert Container -->
+                <div id="alertContainer"></div>
+
+                <!-- Upload Section -->
+                <div id="uploadSection">
+                    <div class="upload-section">
+                        <h3>📁 UPLOAD YOUR DATA FILE</h3>
+                        <p>Upload a CSV or Excel file containing data across multiple years</p>
+                        <label class="file-input-wrapper">
+                            Choose Data File
+                            <input type="file" id="dataFileInput" accept=".csv,.xlsx,.xls">
+                        </label>
+                        <div id="dataFileName" style="margin-top: 10px; color: #28a745; font-weight: 700;"></div>
+                    </div>
+
+                    <div id="uploadProgress" class="hidden">
+                        <div class="loading-spinner"></div>
+                        <p style="text-align: center;">Processing your file...</p>
+                    </div>
+
+                    <!-- What This Tool Does -->
+                    <div class="config-card">
+                        <h4>🔍 What This Tool Checks</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+                            <div style="background: #f8d7da; padding: 1rem; border-radius: 8px; border-left: 4px solid #dc3545;">
+                                <h5 style="color: #721c24; margin-bottom: 0.5rem;">❌ Missing Columns</h5>
+                                <p style="color: #721c24; font-size: 13px;">Columns that exist in baseline year but have NO data in other years</p>
+                            </div>
+                            <div style="background: #cce5ff; padding: 1rem; border-radius: 8px; border-left: 4px solid #004085;">
+                                <h5 style="color: #004085; margin-bottom: 0.5rem;">🆕 New Columns</h5>
+                                <p style="color: #004085; font-size: 13px;">Columns that appear in later years but NOT in baseline year</p>
+                            </div>
+                            <div style="background: #e2e3e5; padding: 1rem; border-radius: 8px; border-left: 4px solid #383d41;">
+                                <h5 style="color: #383d41; margin-bottom: 0.5rem;">⏹️ Discontinued</h5>
+                                <p style="color: #383d41; font-size: 13px;">Columns that had data in baseline but stopped in later years</p>
+                            </div>
+                            <div style="background: #d4edda; padding: 1rem; border-radius: 8px; border-left: 4px solid #28a745;">
+                                <h5 style="color: #155724; margin-bottom: 0.5rem;">✓ Consistent</h5>
+                                <p style="color: #155724; font-size: 13px;">Columns with data across ALL years</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration Section -->
+                <div id="configSection" class="hidden">
+                    <div class="section-header">
+                        <span class="section-icon">⚙</span>
+                        <span class="section-title">CONFIGURE ANALYSIS</span>
+                    </div>
+
+                    <div class="config-card">
+                        <h4>Select Year Column</h4>
+                        <div class="form-group">
+                            <label for="yearColumn">Year Column</label>
+                            <select id="yearColumn" class="form-control" onchange="detectYears()">
+                                <option value="">-- Select Year Column --</option>
+                            </select>
+                            <small style="color: #666; font-size: 12px;">Select the column containing year values (e.g., 2015, 2016, 2024)</small>
+                        </div>
+                        
+                        <!-- Year Detection -->
+                        <div id="yearDetection" class="hidden" style="margin-top: 1rem;">
+                            <h4 style="color: #004080; margin-bottom: 0.5rem;">Detected Years:</h4>
+                            <div id="detectedYears" class="timeline-container"></div>
+                        </div>
+                    </div>
+
+                    <div id="baselineConfig" class="config-card hidden">
+                        <h4>Baseline Year Selection</h4>
+                        <div class="form-group">
+                            <label for="baselineYear">Baseline Year (Reference)</label>
+                            <select id="baselineYear" class="form-control">
+                                <option value="">-- Select Baseline Year --</option>
+                            </select>
+                            <small style="color: #666; font-size: 12px;">Columns in this year will be used as the reference. Default is the minimum (earliest) year.</small>
+                        </div>
+                        <div class="alert alert-info">
+                            <strong>How it works:</strong> The baseline year serves as the reference. We check if columns that have data in the baseline year also have data in all other years, and identify any new columns that appear only in later years.
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <button class="btn btn-gold" onclick="runAnalysis()">🔍 Check Column Consistency</button>
+                        <button class="btn btn-secondary" onclick="resetAll()">Start Over</button>
+                    </div>
+                </div>
+
+                <!-- Processing Section -->
+                <div id="processingSection" class="hidden">
+                    <div class="section-header">
+                        <span class="section-icon">⏳</span>
+                        <span class="section-title">ANALYZING</span>
+                    </div>
+                    <div class="config-card" style="text-align: center;">
+                        <div class="loading-spinner"></div>
+                        <p style="margin-top: 1rem; font-weight: 700; color: #004080;">Checking column consistency across years...</p>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="resultsSection" class="hidden">
+                    <div class="section-header">
+                        <span class="section-icon">📋</span>
+                        <span class="section-title">CONSISTENCY RESULTS</span>
+                    </div>
+
+                    <!-- Overall Summary -->
+                    <div class="stats-grid" id="overallStats">
+                        <!-- Populated dynamically -->
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="legend-box">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #d4edda;"></div>
+                            <span>Has Data</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f8d7da;"></div>
+                            <span>No Data (Empty)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #fff3cd;"></div>
+                            <span>Partial Data (&lt;10% filled)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="status-badge badge-consistent">Consistent</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="status-badge badge-missing">Missing in Years</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="status-badge badge-new">New Column</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="status-badge badge-discontinued">Discontinued</span>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="tabs">
+                        <div class="tab active" onclick="switchTab('issues')">⚠️ Issues Found</div>
+                        <div class="tab" onclick="switchTab('matrix')">📊 Full Matrix</div>
+                        <div class="tab" onclick="switchTab('details')">📝 Detailed Report</div>
+                    </div>
+
+                    <!-- Issues Tab -->
+                    <div id="issuesTab" class="tab-content active">
+                        <div id="issuesResults">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Matrix Tab -->
+                    <div id="matrixTab" class="tab-content">
+                        <div class="config-card">
+                            <h4>Column Data Availability Matrix</h4>
+                            <p style="color: #666; font-size: 13px; margin-bottom: 1rem;">Shows which columns have data in each year. Numbers indicate row count with data.</p>
+                            <div class="table-container" style="max-height: 600px;">
+                                <table class="results-table" id="matrixTable">
+                                    <!-- Populated dynamically -->
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Details Tab -->
+                    <div id="detailsTab" class="tab-content">
+                        <div id="detailsResults">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin: 2rem 0;">
+                        <button class="btn btn-success" onclick="downloadReport()">📥 Download Report (Excel)</button>
+                        <button class="btn btn-primary" onclick="downloadIssuesCSV()">📥 Download Issues (CSV)</button>
+                        <button class="btn btn-secondary" onclick="backToConfig()">Change Settings</button>
+                        <button class="btn btn-secondary" onclick="resetAll()">Start Over</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <p style="margin: 0; font-weight: 700;">National Malaria Control Programme</p>
+            <p>Ministry of Health and Sanitation, Sierra Leone</p>
+            <p style="font-size: 11px;">Medical Stores Compound, Freetown, Sierra Leone</p>
+            <p style="font-size: 10px;">© 2025 Informatics Consultancy Firm-Sierra Leone (ICF-SL)</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let rawData = null;
+        let availableColumns = [];
+        let detectedYears = [];
+        let baselineYear = null;
+        let analysisResults = null;
+        let fileName = '';
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('dataFileInput').addEventListener('change', handleFileUpload);
+        });
+
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = message;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            fileName = file.name;
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+
+            document.getElementById('uploadProgress').classList.remove('hidden');
+
+            if (fileExtension === 'csv') {
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        rawData = results.data;
+                        availableColumns = Object.keys(results.data[0] || {});
+                        document.getElementById('dataFileName').textContent = `✓ Loaded: ${fileName} (${results.data.length} rows, ${availableColumns.length} columns)`;
+                        document.getElementById('uploadProgress').classList.add('hidden');
+                        showConfigSection();
+                    },
+                    error: function(error) {
+                        showAlert('Error reading CSV: ' + error.message, 'error');
+                        document.getElementById('uploadProgress').classList.add('hidden');
+                    }
+                });
+            } else if (['xlsx', 'xls'].includes(fileExtension)) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        rawData = XLSX.utils.sheet_to_json(firstSheet);
+                        availableColumns = Object.keys(rawData[0] || {});
+                        document.getElementById('dataFileName').textContent = `✓ Loaded: ${fileName} (${rawData.length} rows, ${availableColumns.length} columns)`;
+                        document.getElementById('uploadProgress').classList.add('hidden');
+                        showConfigSection();
+                    } catch (error) {
+                        showAlert('Error reading Excel: ' + error.message, 'error');
+                        document.getElementById('uploadProgress').classList.add('hidden');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                showAlert('Please upload a CSV or Excel file', 'error');
+                document.getElementById('uploadProgress').classList.add('hidden');
+            }
+        }
+
+        function showConfigSection() {
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('configSection').classList.remove('hidden');
+            
+            // Populate year column selector
+            const yearSelect = document.getElementById('yearColumn');
+            yearSelect.innerHTML = '<option value="">-- Select Year Column --</option>';
+            
+            availableColumns.forEach(col => {
+                yearSelect.innerHTML += `<option value="${col}">${col}</option>`;
+            });
+
+            // Auto-detect year column
+            const yearPatterns = ['year', 'yr', 'period', 'fiscal'];
+            availableColumns.forEach(col => {
+                const colLower = col.toLowerCase();
+                if (yearPatterns.some(p => colLower.includes(p))) {
+                    yearSelect.value = col;
+                    detectYears();
+                }
+            });
+
+            showAlert('File loaded! Select the Year column to analyze.', 'success');
+        }
+
+        function detectYears() {
+            const yearCol = document.getElementById('yearColumn').value;
+            if (!yearCol) {
+                document.getElementById('yearDetection').classList.add('hidden');
+                document.getElementById('baselineConfig').classList.add('hidden');
+                return;
+            }
+
+            // Extract unique years
+            const yearValues = rawData.map(row => row[yearCol]).filter(v => v !== null && v !== undefined && v !== '');
+            
+            // Try to parse as years
+            const parsedYears = new Set();
+            yearValues.forEach(val => {
+                const strVal = String(val).trim();
+                // Try to extract 4-digit year
+                const yearMatch = strVal.match(/\b(19|20)\d{2}\b/);
+                if (yearMatch) {
+                    parsedYears.add(yearMatch[0]);
+                } else if (!isNaN(parseInt(strVal)) && parseInt(strVal) >= 1900 && parseInt(strVal) <= 2100) {
+                    parsedYears.add(String(parseInt(strVal)));
+                }
+            });
+
+            detectedYears = Array.from(parsedYears).sort((a, b) => parseInt(a) - parseInt(b));
+
+            if (detectedYears.length === 0) {
+                showAlert('No valid years detected in this column. Please select a different column.', 'error');
+                document.getElementById('yearDetection').classList.add('hidden');
+                document.getElementById('baselineConfig').classList.add('hidden');
+                return;
+            }
+
+            // Display detected years timeline
+            let timelineHtml = '<div class="timeline">';
+            detectedYears.forEach((year, index) => {
+                const isFirst = index === 0;
+                timelineHtml += `
+                    ${index > 0 ? '<div class="timeline-line"></div>' : ''}
+                    <div class="timeline-year">
+                        <div class="timeline-dot ${isFirst ? 'baseline' : ''}"></div>
+                        <span class="timeline-label">${year}</span>
+                        ${isFirst ? '<span class="baseline-indicator">BASELINE</span>' : ''}
+                    </div>
+                `;
+            });
+            timelineHtml += '</div>';
+            
+            document.getElementById('detectedYears').innerHTML = timelineHtml;
+            document.getElementById('yearDetection').classList.remove('hidden');
+
+            // Populate baseline selector
+            const baselineSelect = document.getElementById('baselineYear');
+            baselineSelect.innerHTML = '<option value="">-- Select Baseline Year --</option>';
+            detectedYears.forEach(year => {
+                baselineSelect.innerHTML += `<option value="${year}" ${year === detectedYears[0] ? 'selected' : ''}>${year}</option>`;
+            });
+            
+            document.getElementById('baselineConfig').classList.remove('hidden');
+            
+            showAlert(`Detected ${detectedYears.length} years: ${detectedYears.join(', ')}. Earliest year (${detectedYears[0]}) set as baseline.`, 'success');
+        }
+
+        function runAnalysis() {
+            const yearCol = document.getElementById('yearColumn').value;
+            baselineYear = document.getElementById('baselineYear').value;
+
+            if (!yearCol) {
+                showAlert('Please select a Year column', 'error');
+                return;
+            }
+
+            if (!baselineYear) {
+                showAlert('Please select a Baseline year', 'error');
+                return;
+            }
+
+            if (detectedYears.length < 2) {
+                showAlert('Need at least 2 years to compare', 'error');
+                return;
+            }
+
+            document.getElementById('configSection').classList.add('hidden');
+            document.getElementById('processingSection').classList.remove('hidden');
+
+            setTimeout(() => {
+                analyzeColumnConsistency(yearCol);
+                displayResults();
+            }, 100);
+        }
+
+        function analyzeColumnConsistency(yearCol) {
+            analysisResults = {
+                yearColumn: yearCol,
+                baselineYear: baselineYear,
+                years: detectedYears,
+                columns: {},
+                issues: [],
+                summary: {
+                    totalColumns: 0,
+                    consistent: 0,
+                    missingInSomeYears: 0,
+                    newColumns: 0,
+                    discontinued: 0
+                }
+            };
+
+            // Get columns to analyze (exclude year column)
+            const columnsToAnalyze = availableColumns.filter(col => col !== yearCol);
+            analysisResults.summary.totalColumns = columnsToAnalyze.length;
+
+            // For each column, count non-empty values per year
+            columnsToAnalyze.forEach(col => {
+                analysisResults.columns[col] = {
+                    name: col,
+                    yearData: {},
+                    status: 'consistent',
+                    missingYears: [],
+                    presentYears: [],
+                    inBaseline: false
+                };
+
+                // Count data per year
+                detectedYears.forEach(year => {
+                    const yearRows = rawData.filter(row => {
+                        const rowYear = String(row[yearCol]).trim();
+                        const yearMatch = rowYear.match(/\b(19|20)\d{2}\b/);
+                        return yearMatch ? yearMatch[0] === year : parseInt(rowYear) === parseInt(year);
+                    });
+
+                    const totalRows = yearRows.length;
+                    const filledRows = yearRows.filter(row => {
+                        const val = row[col];
+                        return val !== null && val !== undefined && String(val).trim() !== '';
+                    }).length;
+
+                    analysisResults.columns[col].yearData[year] = {
+                        total: totalRows,
+                        filled: filledRows,
+                        percentage: totalRows > 0 ? (filledRows / totalRows * 100).toFixed(1) : 0,
+                        hasData: filledRows > 0,
+                        isPartial: filledRows > 0 && (filledRows / totalRows) < 0.1 // Less than 10%
+                    };
+
+                    if (filledRows > 0) {
+                        analysisResults.columns[col].presentYears.push(year);
+                    } else {
+                        analysisResults.columns[col].missingYears.push(year);
+                    }
+                });
+
+                // Check if column has data in baseline year
+                analysisResults.columns[col].inBaseline = analysisResults.columns[col].yearData[baselineYear]?.hasData || false;
+
+                // Determine status
+                const colData = analysisResults.columns[col];
+                
+                if (colData.presentYears.length === detectedYears.length) {
+                    // Data in ALL years
+                    colData.status = 'consistent';
+                    analysisResults.summary.consistent++;
+                } else if (!colData.inBaseline && colData.presentYears.length > 0) {
+                    // Not in baseline but exists in later years - NEW COLUMN
+                    colData.status = 'new';
+                    analysisResults.summary.newColumns++;
+                    
+                    analysisResults.issues.push({
+                        column: col,
+                        type: 'New Column',
+                        severity: 'info',
+                        message: `Column "${col}" does NOT exist in baseline year (${baselineYear}) but appears in: ${colData.presentYears.join(', ')}`,
+                        presentYears: colData.presentYears,
+                        missingYears: colData.missingYears,
+                        baselineYear: baselineYear
+                    });
+                } else if (colData.inBaseline && colData.missingYears.length > 0) {
+                    // Check if discontinued (no data in most recent years)
+                    const laterYears = detectedYears.filter(y => parseInt(y) > parseInt(baselineYear));
+                    const missingInLaterYears = laterYears.filter(y => colData.missingYears.includes(y));
+                    
+                    if (missingInLaterYears.length === laterYears.length && laterYears.length > 0) {
+                        // Missing in ALL years after baseline
+                        colData.status = 'discontinued';
+                        analysisResults.summary.discontinued++;
+                        
+                        analysisResults.issues.push({
+                            column: col,
+                            type: 'Discontinued',
+                            severity: 'warning',
+                            message: `Column "${col}" exists in baseline (${baselineYear}) but has NO data in any later years: ${missingInLaterYears.join(', ')}`,
+                            presentYears: colData.presentYears,
+                            missingYears: colData.missingYears,
+                            baselineYear: baselineYear
+                        });
+                    } else {
+                        // Missing in some years
+                        colData.status = 'missing';
+                        analysisResults.summary.missingInSomeYears++;
+                        
+                        analysisResults.issues.push({
+                            column: col,
+                            type: 'Missing in Years',
+                            severity: 'critical',
+                            message: `Column "${col}" exists in baseline (${baselineYear}) but has NO data in: ${colData.missingYears.join(', ')}`,
+                            presentYears: colData.presentYears,
+                            missingYears: colData.missingYears,
+                            baselineYear: baselineYear
+                        });
+                    }
+                } else if (colData.presentYears.length === 0) {
+                    // No data in any year - empty column
+                    colData.status = 'empty';
+                }
+            });
+        }
+
+        function displayResults() {
+            document.getElementById('processingSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+            const summary = analysisResults.summary;
+            const issueCount = analysisResults.issues.length;
+
+            // Display overall stats
+            document.getElementById('overallStats').innerHTML = `
+                <div class="stats-card">
+                    <h4>Total Columns</h4>
+                    <div class="metric-value">${summary.totalColumns}</div>
+                    <p>Analyzed</p>
+                </div>
+                <div class="stats-card">
+                    <h4>Years Compared</h4>
+                    <div class="metric-value">${detectedYears.length}</div>
+                    <p>${detectedYears[0]} - ${detectedYears[detectedYears.length-1]}</p>
+                </div>
+                <div class="stats-card success">
+                    <h4>Consistent</h4>
+                    <div class="metric-value">${summary.consistent}</div>
+                    <p>All years have data</p>
+                </div>
+                <div class="stats-card ${summary.missingInSomeYears > 0 ? 'warning' : 'success'}">
+                    <h4>Missing in Years</h4>
+                    <div class="metric-value">${summary.missingInSomeYears}</div>
+                    <p>Gaps detected</p>
+                </div>
+                <div class="stats-card info">
+                    <h4>New Columns</h4>
+                    <div class="metric-value">${summary.newColumns}</div>
+                    <p>Not in baseline</p>
+                </div>
+                <div class="stats-card">
+                    <h4>Discontinued</h4>
+                    <div class="metric-value">${summary.discontinued}</div>
+                    <p>Stopped after baseline</p>
+                </div>
+            `;
+
+            displayIssues();
+            displayMatrix();
+            displayDetails();
+
+            showAlert(`Analysis complete! Found ${issueCount} consistency issues.`, issueCount > 0 ? 'warning' : 'success');
+        }
+
+        function displayIssues() {
+            const container = document.getElementById('issuesResults');
+            const issues = analysisResults.issues;
+
+            if (issues.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>✓ All columns are consistent!</strong><br>
+                        All columns that have data in the baseline year (${baselineYear}) also have data in all other years.
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by type
+            const criticalIssues = issues.filter(i => i.severity === 'critical');
+            const warningIssues = issues.filter(i => i.severity === 'warning');
+            const infoIssues = issues.filter(i => i.severity === 'info');
+
+            let html = '';
+
+            if (criticalIssues.length > 0) {
+                html += `
+                    <div class="config-card" style="border-color: #dc3545;">
+                        <h4 style="color: #dc3545;">❌ Missing Data (${criticalIssues.length} columns)</h4>
+                        <p style="color: #666; font-size: 13px; margin-bottom: 1rem;">These columns exist in baseline (${baselineYear}) but have NO data in some years:</p>
+                        ${criticalIssues.map(issue => createIssueCard(issue)).join('')}
+                    </div>
+                `;
+            }
+
+            if (warningIssues.length > 0) {
+                html += `
+                    <div class="config-card" style="border-color: #ffc107;">
+                        <h4 style="color: #856404;">⏹️ Discontinued Columns (${warningIssues.length})</h4>
+                        <p style="color: #666; font-size: 13px; margin-bottom: 1rem;">These columns had data in baseline but stopped in all later years:</p>
+                        ${warningIssues.map(issue => createIssueCard(issue)).join('')}
+                    </div>
+                `;
+            }
+
+            if (infoIssues.length > 0) {
+                html += `
+                    <div class="config-card" style="border-color: #17a2b8;">
+                        <h4 style="color: #0c5460;">🆕 New Columns (${infoIssues.length})</h4>
+                        <p style="color: #666; font-size: 13px; margin-bottom: 1rem;">These columns do NOT exist in baseline (${baselineYear}) but appear in later years:</p>
+                        ${infoIssues.map(issue => createIssueCard(issue)).join('')}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function createIssueCard(issue) {
+            const severityClass = issue.severity === 'critical' ? 'critical' : issue.severity === 'warning' ? 'warning' : 'info';
+            const badgeClass = issue.type === 'New Column' ? 'badge-new' : issue.type === 'Discontinued' ? 'badge-discontinued' : 'badge-missing';
+            
+            return `
+                <div class="issue-card ${severityClass}">
+                    <h5>
+                        <span class="status-badge ${badgeClass}">${issue.type}</span>
+                        <strong>${issue.column}</strong>
+                    </h5>
+                    <p>${issue.message}</p>
+                    <div class="year-tags">
+                        ${detectedYears.map(year => {
+                            const isPresent = issue.presentYears.includes(year);
+                            const isBaseline = year === issue.baselineYear;
+                            return `<span class="year-tag ${isPresent ? 'present' : 'missing'}">${year}${isBaseline ? ' (baseline)' : ''}: ${isPresent ? '✓ Has Data' : '✗ No Data'}</span>`;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayMatrix() {
+            const table = document.getElementById('matrixTable');
+            
+            let html = '<thead><tr><th>Column Name</th><th>Status</th>';
+            detectedYears.forEach(year => {
+                const isBaseline = year === baselineYear;
+                html += `<th class="year-cell">${year}${isBaseline ? ' ★' : ''}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            // Sort columns by status (issues first)
+            const sortedColumns = Object.values(analysisResults.columns).sort((a, b) => {
+                const statusOrder = { 'missing': 0, 'discontinued': 1, 'new': 2, 'consistent': 3, 'empty': 4 };
+                return statusOrder[a.status] - statusOrder[b.status];
+            });
+
+            sortedColumns.forEach(col => {
+                const rowClass = col.status === 'missing' ? 'critical-row' : 
+                                col.status === 'discontinued' || col.status === 'new' ? 'issue-row' : '';
+                const badgeClass = col.status === 'consistent' ? 'badge-consistent' :
+                                  col.status === 'missing' ? 'badge-missing' :
+                                  col.status === 'new' ? 'badge-new' :
+                                  col.status === 'discontinued' ? 'badge-discontinued' : 'badge-partial';
+                
+                html += `<tr class="${rowClass}">`;
+                html += `<td><strong>${col.name}</strong></td>`;
+                html += `<td><span class="status-badge ${badgeClass}">${col.status}</span></td>`;
+                
+                detectedYears.forEach(year => {
+                    const yearData = col.yearData[year];
+                    let cellClass = 'no-data';
+                    let cellContent = '0';
+                    
+                    if (yearData.hasData) {
+                        cellClass = yearData.isPartial ? 'partial-data' : 'has-data';
+                        cellContent = `${yearData.filled}`;
+                    }
+                    
+                    html += `<td class="year-cell ${cellClass}" title="${yearData.percentage}% filled (${yearData.filled}/${yearData.total} rows)">${cellContent}</td>`;
+                });
+                
+                html += '</tr>';
+            });
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        function displayDetails() {
+            const container = document.getElementById('detailsResults');
+            
+            let html = '';
+
+            // Consistent columns
+            const consistentCols = Object.values(analysisResults.columns).filter(c => c.status === 'consistent');
+            if (consistentCols.length > 0) {
+                html += `
+                    <div class="config-card" style="border-color: #28a745;">
+                        <h4 style="color: #155724;">✓ Consistent Columns (${consistentCols.length})</h4>
+                        <p style="color: #666; font-size: 13px; margin-bottom: 0.5rem;">These columns have data in ALL years:</p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.5rem;">
+                            ${consistentCols.map(col => `<span style="background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 4px; font-size: 12px;">${col.name}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Missing columns detail
+            const missingCols = Object.values(analysisResults.columns).filter(c => c.status === 'missing');
+            if (missingCols.length > 0) {
+                html += `
+                    <div class="config-card" style="border-color: #dc3545;">
+                        <h4 style="color: #721c24;">❌ Columns with Missing Data (${missingCols.length})</h4>
+                        <div class="table-container" style="max-height: 300px;">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Column</th>
+                                        <th>Years with Data</th>
+                                        <th>Years Missing Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${missingCols.map(col => `
+                                        <tr>
+                                            <td><strong>${col.name}</strong></td>
+                                            <td style="color: #155724;">${col.presentYears.join(', ')}</td>
+                                            <td style="color: #721c24; font-weight: 700;">${col.missingYears.join(', ')}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // New columns detail
+            const newCols = Object.values(analysisResults.columns).filter(c => c.status === 'new');
+            if (newCols.length > 0) {
+                html += `
+                    <div class="config-card" style="border-color: #17a2b8;">
+                        <h4 style="color: #0c5460;">🆕 New Columns (Not in Baseline ${baselineYear}) - ${newCols.length}</h4>
+                        <div class="table-container" style="max-height: 300px;">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Column</th>
+                                        <th>First Appears In</th>
+                                        <th>Present In Years</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${newCols.map(col => `
+                                        <tr>
+                                            <td><strong>${col.name}</strong></td>
+                                            <td style="color: #004085; font-weight: 700;">${col.presentYears[0]}</td>
+                                            <td>${col.presentYears.join(', ')}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Discontinued columns detail
+            const discontinuedCols = Object.values(analysisResults.columns).filter(c => c.status === 'discontinued');
+            if (discontinuedCols.length > 0) {
+                html += `
+                    <div class="config-card" style="border-color: #6c757d;">
+                        <h4 style="color: #383d41;">⏹️ Discontinued Columns (${discontinuedCols.length})</h4>
+                        <div class="table-container" style="max-height: 300px;">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Column</th>
+                                        <th>Last Data In</th>
+                                        <th>Missing Since</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${discontinuedCols.map(col => `
+                                        <tr>
+                                            <td><strong>${col.name}</strong></td>
+                                            <td>${col.presentYears[col.presentYears.length - 1]}</td>
+                                            <td style="color: #721c24;">${col.missingYears.join(', ')}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html || '<div class="alert alert-info">No detailed information to display.</div>';
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            const tabIndex = tabName === 'issues' ? 0 : tabName === 'matrix' ? 1 : 2;
+            document.querySelectorAll('.tab')[tabIndex].classList.add('active');
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+        }
+
+        function downloadReport() {
+            const wb = XLSX.utils.book_new();
+            
+            // Summary sheet
+            const summaryData = [
+                ['COLUMN CONSISTENCY REPORT'],
+                ['File:', fileName],
+                ['Date:', new Date().toLocaleString()],
+                ['Baseline Year:', baselineYear],
+                ['Years Analyzed:', detectedYears.join(', ')],
+                [''],
+                ['SUMMARY'],
+                ['Total Columns', analysisResults.summary.totalColumns],
+                ['Consistent (all years)', analysisResults.summary.consistent],
+                ['Missing in Some Years', analysisResults.summary.missingInSomeYears],
+                ['New Columns (not in baseline)', analysisResults.summary.newColumns],
+                ['Discontinued', analysisResults.summary.discontinued],
+            ];
+            const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
+            
+            // Issues sheet
+            if (analysisResults.issues.length > 0) {
+                const issuesData = [
+                    ['Column', 'Issue Type', 'Severity', 'Message', 'Years with Data', 'Years Missing Data']
+                ];
+                analysisResults.issues.forEach(issue => {
+                    issuesData.push([
+                        issue.column,
+                        issue.type,
+                        issue.severity,
+                        issue.message,
+                        issue.presentYears.join(', '),
+                        issue.missingYears.join(', ')
+                    ]);
+                });
+                const issuesWs = XLSX.utils.aoa_to_sheet(issuesData);
+                XLSX.utils.book_append_sheet(wb, issuesWs, 'Issues');
+            }
+            
+            // Full matrix sheet
+            const matrixData = [['Column', 'Status', ...detectedYears.map(y => `${y} (rows)`)]];
+            Object.values(analysisResults.columns).forEach(col => {
+                matrixData.push([
+                    col.name,
+                    col.status,
+                    ...detectedYears.map(year => col.yearData[year].filled)
+                ]);
+            });
+            const matrixWs = XLSX.utils.aoa_to_sheet(matrixData);
+            XLSX.utils.book_append_sheet(wb, matrixWs, 'Full Matrix');
+            
+            const outputName = fileName.replace(/\.[^/.]+$/, '') + '_consistency_report.xlsx';
+            XLSX.writeFile(wb, outputName);
+            showAlert('Report downloaded!', 'success');
+        }
+
+        function downloadIssuesCSV() {
+            if (analysisResults.issues.length === 0) {
+                showAlert('No issues to download!', 'info');
+                return;
+            }
+            
+            const csvData = analysisResults.issues.map(issue => ({
+                Column: issue.column,
+                'Issue Type': issue.type,
+                Severity: issue.severity,
+                Message: issue.message,
+                'Years with Data': issue.presentYears.join(', '),
+                'Years Missing Data': issue.missingYears.join(', '),
+                'Baseline Year': issue.baselineYear
+            }));
+
+            const csv = Papa.unparse(csvData);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            
+            const outputName = fileName.replace(/\.[^/.]+$/, '') + '_consistency_issues.csv';
+            link.download = outputName;
+            link.click();
+            
+            showAlert('Issues CSV downloaded!', 'success');
+        }
+
+        function backToConfig() {
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('configSection').classList.remove('hidden');
+        }
+
+        function resetAll() {
+            rawData = null;
+            availableColumns = [];
+            detectedYears = [];
+            baselineYear = null;
+            analysisResults = null;
+            fileName = '';
+
+            document.getElementById('uploadSection').classList.remove('hidden');
+            document.getElementById('configSection').classList.add('hidden');
+            document.getElementById('processingSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            
+            document.getElementById('dataFileInput').value = '';
+            document.getElementById('dataFileName').textContent = '';
+            document.getElementById('alertContainer').innerHTML = '';
+            document.getElementById('yearDetection').classList.add('hidden');
+            document.getElementById('baselineConfig').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
